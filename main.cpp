@@ -219,13 +219,35 @@ int main(int argc, char** argv)
     if (!patches.empty())
     {
         vector<string>::iterator iter, iterEnd;
+
+        string prefix;
+        string patch;
+        size_t idx;
+
         for (iter = patches.begin(), iterEnd = patches.end(); iter != iterEnd; ++iter)
         {
-            cout << "Applying patch '" << *iter << "'..." << endl;
-            if (!SFileOpenPatchArchive(hArchive, iter->c_str(), strPatchPrefix.c_str(), 0))
+            prefix = strPatchPrefix;;
+            patch = *iter;
+
+            idx = patch.find_first_of(',');
+            if (idx != string::npos)
+            {
+                prefix = patch.substr(idx+1, string::npos);
+                patch = patch.substr(0, idx);
+            }
+
+            if (prefix.length())
+            {
+                cout << "Applying patch '" << patch << "' (prefix " << prefix << ")..." << endl;
+            }else{
+                cout << "Applying patch '" << patch << "' (no prefix)..." << endl;
+            }
+
+            if (!SFileOpenPatchArchive(hArchive, patch.c_str(), prefix.c_str(), 0))
                 cerr << "Failed to apply the patch '" << *iter << "'" << endl;
         }
     }
+
     
     // Search the files
     if (!strSearchPattern.empty())
