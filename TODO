@@ -1,0 +1,3 @@
+* Make the documentation less confusing!
+* Document passing per-patch prefixes
+* Explain why searching with prefixed patches is broken (and maybe fix it)
