@@ -343,7 +343,7 @@ int main(int argc, char** argv)
                 strDestName += iter->strFileName;
             }
 
-            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str()))
+            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str(), SFILE_OPEN_PATCHED_FILE))
                 cerr << "Failed to extract the file '" << iter->strFullPath << "' in " << strDestName << endl;
         }
     }
