@@ -299,7 +299,7 @@ static int DoMPQSearch(TMPQSearch * hs, SFILE_FIND_DATA * lpFindFileData)
                     }
 
                     // Check the file name against the wildcard
-                    if(CheckWildCard(szFileName, hs->szSearchMask))
+                    if(CheckWildCard(szFileName + nPrefixLength, hs->szSearchMask))
                     {
                         // Fill the found entry
                         lpFindFileData->dwHashIndex  = pPatchEntry->dwHashIndex;
