@@ -238,13 +238,13 @@ int main(int argc, char** argv)
 
             if (prefix.length())
             {
-                cout << "Applying patch '" << patch << "' (prefix " << prefix << ")..." << endl;
+                cout << "Applying patch '" << patch << "' (prefix '" << prefix << "')..." << endl;
             }else{
                 cout << "Applying patch '" << patch << "' (no prefix)..." << endl;
             }
 
             if (!SFileOpenPatchArchive(hArchive, patch.c_str(), prefix.c_str(), 0))
-                cerr << "Failed to apply the patch '" << *iter << "'" << endl;
+                cerr << "Failed to apply the patch '" << patch << "'" << endl;
         }
     }
 
