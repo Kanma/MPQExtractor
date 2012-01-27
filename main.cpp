@@ -321,8 +321,12 @@ int main(int argc, char** argv)
             
             if (bUseFullPath)
             {
+                if (bLowerCase){
+                    transform(iter->strFullPath.begin(), iter->strFullPath.end(), iter->strFullPath.begin(), ::tolower);
+                }
+
                 strDestName += iter->strFullPath;
-                
+
                 size_t offset = strDestName.find("\\");
                 while (offset != string::npos)
                 {
@@ -352,6 +356,10 @@ int main(int argc, char** argv)
             }
             else
             {
+                if (bLowerCase){
+                    transform(iter->strFileName.begin(), iter->strFileName.end(), iter->strFileName.begin(), ::tolower);
+                }
+
                 strDestName += iter->strFileName;
             }
 
