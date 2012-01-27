@@ -91,9 +91,11 @@ void showUsage(const std::string& strApplicationName)
          << "    --patches <FILE-1> <FILE-2> ... <FILE-N>," << endl
          << "    -p <FILE-1> <FILE-2> ... <FILE-N>:" << endl
          << "                             The patches to apply to the archive before extracting files," << endl
-         << "                             in their order of application" << endl
-         << "    --lowercase," << endl
-         << "    -c:                      Convert extracted file paths to lowercase" <<endl
+         << "                             in their order of application. A per-patch prefix can be " << endl
+         << "                             specified with a comma (e.g. -p wow-update-13164.MPQ,base)" << endl
+         << "    --prefix <PREFIX>        Path prefix to apply to all patches which do not specify their " << endl
+         << "                             own explicit prefix" << endl
+         << "    --lowercase, -c:         Convert extracted file paths to lowercase" <<endl
          << endl
          << "Examples:" << endl
          << endl
