@@ -32,6 +32,7 @@ enum
     OPT_EXTRACT,
     OPT_DEST,
     OPT_FULLPATH,
+    OPT_LOWERCASE,
 };
 
 
@@ -51,6 +52,8 @@ const CSimpleOpt::SOption COMMAND_LINE_OPTIONS[] = {
     { OPT_DEST,             "--dest",           SO_REQ_SEP },
     { OPT_FULLPATH,         "-f",               SO_NONE    },
     { OPT_FULLPATH,         "--fullpath",       SO_NONE    },
+    { OPT_LOWERCASE,        "-c",               SO_NONE    },
+    { OPT_LOWERCASE,        "--lowercase",      SO_NONE    },
     
     SO_END_OF_OPTIONS
 };
@@ -89,6 +92,8 @@ void showUsage(const std::string& strApplicationName)
          << "    -p <FILE-1> <FILE-2> ... <FILE-N>:" << endl
          << "                             The patches to apply to the archive before extracting files," << endl
          << "                             in their order of application" << endl
+         << "    --lowercase," << endl
+         << "    -c:                      Convert extracted file paths to lowercase" <<endl
          << endl
          << "Examples:" << endl
          << endl
@@ -127,6 +132,7 @@ int main(int argc, char** argv)
     vector<tSearchResult> searchResults;
     bool bExtraction = false;
     bool bUseFullPath = false;
+    bool bLowerCase = false;
 
 
     // Parse the command-line parameters
@@ -178,6 +184,10 @@ int main(int argc, char** argv)
 
                 case OPT_FULLPATH:
                     bUseFullPath = true;
+                    break;
+
+                case OPT_LOWERCASE:
+                    bLowerCase = true;
                     break;
             }
         }
