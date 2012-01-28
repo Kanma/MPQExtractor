@@ -1,7 +1,5 @@
 # MPQExtractor
 
-## Summary
-
 A command-line tool to extract files from MPQ archives (used by Blizzard games).
 
 Works on MacOS X and Linux.
@@ -143,12 +141,14 @@ Apply patches with different bases, extract files in lowercase:
 
 ## Dependencies
 
-The repository/package contain all the necessary files, no need to install anything.
+The repository/package contains all the necessary files to build the extractor.
 
-The following libraries are used (and are part of the distribution):
+The following libraries are included as part of the distribution:
 
 * StormLib (http://www.zezula.net/en/mpq/stormlib.html), no license, free to use
 * SimpleOpt 3.4 (http://code.jellycan.com/simpleopt/), MIT License
+
+StormLib has some patches that have not yet been merged back into the official release.
 
 
 ## License
