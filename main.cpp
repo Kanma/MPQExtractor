@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <unistd.h>
 #include <dirent.h>
 #include <stdlib.h>
