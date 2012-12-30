@@ -145,7 +145,7 @@ static int CopyMpqFileSectors(
     int nError = ERROR_SUCCESS;
 
     // Remember the position in the destination file
-    FileStream_GetPos(pNewStream, MpqFilePos);
+    FileStream_GetPos(pNewStream, &MpqFilePos);
     MpqFilePos -= ha->MpqPos;
 
     // Resolve decryption keys. Note that the file key given 
@@ -174,7 +174,7 @@ static int CopyMpqFileSectors(
     // If we have to save sector offset table, do it.
     if(nError == ERROR_SUCCESS && hf->SectorOffsets != NULL)
     {
-        DWORD * SectorOffsetsCopy = (DWORD *)ALLOCMEM(BYTE, hf->SectorOffsets[0]);
+        DWORD * SectorOffsetsCopy = (DWORD *)STORM_ALLOC(BYTE, hf->SectorOffsets[0]);
         DWORD dwSectorOffsLen = hf->SectorOffsets[0];
 
         assert((pFileEntry->dwFlags & MPQ_FILE_SINGLE_UNIT) == 0);
@@ -194,6 +194,7 @@ static int CopyMpqFileSectors(
             if(!FileStream_Write(pNewStream, NULL, SectorOffsetsCopy, dwSectorOffsLen))
                 nError = GetLastError();
 
+            dwBytesToCopy -= dwSectorOffsLen;
             dwCmpSize += dwSectorOffsLen;
         }
 
@@ -204,7 +205,7 @@ static int CopyMpqFileSectors(
             CompactCB(pvUserData, CCB_COMPACTING_FILES, CompactBytesProcessed, CompactTotalBytes);
         }
 
-        FREEMEM(SectorOffsetsCopy);
+        STORM_FREE(SectorOffsetsCopy);
     }
 
     // Now we have to copy all file sectors. We do it without
@@ -216,16 +217,16 @@ static int CopyMpqFileSectors(
             DWORD dwRawDataInSector = hf->dwSectorSize;
             DWORD dwRawByteOffset = dwSector * hf->dwSectorSize;
 
-            // Last sector: If there is not enough bytes remaining in the file, cut the raw size
-            if(dwRawDataInSector > dwBytesToCopy)
-                dwRawDataInSector = dwBytesToCopy;
-
             // Fix the raw data length if the file is compressed
             if(hf->SectorOffsets != NULL)
             {
                 dwRawDataInSector = hf->SectorOffsets[dwSector+1] - hf->SectorOffsets[dwSector];
                 dwRawByteOffset = hf->SectorOffsets[dwSector];
             }
+
+            // Last sector: If there is not enough bytes remaining in the file, cut the raw size
+            if(dwRawDataInSector > dwBytesToCopy)
+                dwRawDataInSector = dwBytesToCopy;
 
             // Calculate the raw file offset of the file sector
             CalculateRawSectorOffset(RawFilePos, hf, dwRawByteOffset);
@@ -263,7 +264,7 @@ static int CopyMpqFileSectors(
             }
 
             // Adjust byte counts
-            dwBytesToCopy -= hf->dwSectorSize;
+            dwBytesToCopy -= dwRawDataInSector;
             dwCmpSize += dwRawDataInSector;
         }
     }
@@ -291,8 +292,37 @@ static int CopyMpqFileSectors(
             }
 
             // Size of the CRC block is also included in the compressed file size
+            dwBytesToCopy -= dwCrcLength;
             dwCmpSize += dwCrcLength;
         }
+    }
+
+    // There might be extra data beyond sector checksum table
+    // Sometimes, these data are even part of sector offset table
+    // Examples:
+    // 2012 - WoW\15354\locale-enGB.MPQ:DBFilesClient\SpellLevels.dbc
+    // 2012 - WoW\15354\locale-enGB.MPQ:Interface\AddOns\Blizzard_AuctionUI\Blizzard_AuctionUI.xml
+    if(nError == ERROR_SUCCESS && dwBytesToCopy != 0)
+    {
+        LPBYTE pbExtraData;
+
+        // Allocate space for the extra data
+        pbExtraData = STORM_ALLOC(BYTE, dwBytesToCopy);
+        if(pbExtraData != NULL)
+        {
+            if(!FileStream_Read(ha->pStream, NULL, pbExtraData, dwBytesToCopy))
+                nError = GetLastError();
+
+            if(!FileStream_Write(pNewStream, NULL, pbExtraData, dwBytesToCopy))
+                nError = GetLastError();
+
+            // Include these extra data in the compressed size
+            dwCmpSize += dwBytesToCopy;
+            dwBytesToCopy = 0;
+            STORM_FREE(pbExtraData);
+        }
+        else
+            nError = ERROR_NOT_ENOUGH_MEMORY;
     }
 
     // Write the MD5's of the raw file data, if needed
@@ -431,8 +461,8 @@ bool WINAPI SFileCompactArchive(HANDLE hMpq, const char * szListFile, bool /* bR
     ULONGLONG ByteOffset;
     ULONGLONG ByteCount;
     LPDWORD pFileKeys = NULL;
-    char szTempFile[MAX_PATH] = "";
-    char * szTemp = NULL;
+    TCHAR szTempFile[MAX_PATH] = _T("");
+    TCHAR * szTemp = NULL;
     int nError = ERROR_SUCCESS;
 
     // Test the valid parameters
@@ -450,7 +480,7 @@ bool WINAPI SFileCompactArchive(HANDLE hMpq, const char * szListFile, bool /* bR
     // Create the table with file keys
     if(nError == ERROR_SUCCESS)
     {
-        if((pFileKeys = ALLOCMEM(DWORD, ha->dwFileTableSize)) != NULL)
+        if((pFileKeys = STORM_ALLOC(DWORD, ha->dwFileTableSize)) != NULL)
             memset(pFileKeys, 0, sizeof(DWORD) * ha->dwFileTableSize);
         else
             nError = ERROR_NOT_ENOUGH_MEMORY;
@@ -461,7 +491,7 @@ bool WINAPI SFileCompactArchive(HANDLE hMpq, const char * szListFile, bool /* bR
     if(nError == ERROR_SUCCESS)
     {
         // Initialize the progress variables for compact callback
-        FileStream_GetSize(ha->pStream, CompactTotalBytes);
+        FileStream_GetSize(ha->pStream, &CompactTotalBytes);
         CompactBytesProcessed = 0;
         nError = CheckIfAllFilesKnown(ha, szListFile, pFileKeys);
     }
@@ -469,13 +499,13 @@ bool WINAPI SFileCompactArchive(HANDLE hMpq, const char * szListFile, bool /* bR
     // Get the temporary file name and create it
     if(nError == ERROR_SUCCESS)
     {
-        strcpy(szTempFile, ha->pStream->szFileName);
-        if((szTemp = strrchr(szTempFile, '.')) != NULL)
-            strcpy(szTemp + 1, "mp_");
+        _tcscpy(szTempFile, FileStream_GetFileName(ha->pStream));
+        if((szTemp = _tcsrchr(szTempFile, '.')) != NULL)
+            _tcscpy(szTemp + 1, _T("mp_"));
         else
-            strcat(szTempFile, "_");
+            _tcscat(szTempFile, _T("_"));
 
-        pTempStream = FileStream_CreateFile(szTempFile);
+        pTempStream = FileStream_CreateFile(szTempFile, STREAM_PROVIDER_LINEAR | BASE_PROVIDER_FILE);
         if(pTempStream == NULL)
             nError = GetLastError();
     }
@@ -525,13 +555,13 @@ bool WINAPI SFileCompactArchive(HANDLE hMpq, const char * szListFile, bool /* bR
     if(nError == ERROR_SUCCESS)
     {
         nError = CopyMpqFiles(ha, pFileKeys, pTempStream);
-        ha->dwFlags |= MPQ_FLAG_CHANGED | MPQ_FLAG_LISTFILE_VALID | MPQ_FLAG_ATTRIBS_VALID;
+        ha->dwFlags |= MPQ_FLAG_CHANGED;
     }
 
     // If succeeded, switch the streams
     if(nError == ERROR_SUCCESS)
     {
-        if(FileStream_MoveFile(ha->pStream, pTempStream))
+        if(FileStream_Switch(ha->pStream, pTempStream))
             pTempStream = NULL;
         else
             nError = ERROR_CAN_NOT_COMPLETE;
@@ -562,7 +592,7 @@ bool WINAPI SFileCompactArchive(HANDLE hMpq, const char * szListFile, bool /* bR
     if(pTempStream != NULL)
         FileStream_Close(pTempStream);
     if(pFileKeys != NULL)
-        FREEMEM(pFileKeys);
+        STORM_FREE(pFileKeys);
     if(nError != ERROR_SUCCESS)
         SetLastError(nError);
     return (nError == ERROR_SUCCESS);
@@ -589,7 +619,6 @@ bool WINAPI SFileSetMaxFileCount(HANDLE hMpq, DWORD dwMaxFileCount)
     TMPQHash * pOldHashTable = NULL;
     DWORD dwOldHashTableSize = 0;
     DWORD dwOldFileTableSize = 0;
-    DWORD dwFileCount = 0;
     int nError = ERROR_SUCCESS;
 
     // Test the valid parameters
@@ -598,19 +627,9 @@ bool WINAPI SFileSetMaxFileCount(HANDLE hMpq, DWORD dwMaxFileCount)
     if(ha->dwFlags & MPQ_FLAG_READ_ONLY)
         nError = ERROR_ACCESS_DENIED;
 
-    // The new limit must not be lower than file count
-    if(nError == ERROR_SUCCESS)
-    {
-        // Count the existing files
-        for(pFileEntry = ha->pFileTable; pFileEntry < pOldFileTableEnd; pFileEntry++)
-        {
-            if(pFileEntry->dwFlags & MPQ_FILE_EXISTS)
-                dwFileCount++;
-        }
-
-        if(dwFileCount > dwMaxFileCount)
-            nError = ERROR_DISK_FULL;
-    }
+    // The new limit must not be lower than the index of the last file entry in the table
+    if(nError == ERROR_SUCCESS && ha->dwFileTableSize > dwMaxFileCount)
+        nError = ERROR_DISK_FULL;
 
     // ALL file names must be known in order to be able
     // to rebuild hash table size
@@ -628,7 +647,7 @@ bool WINAPI SFileSetMaxFileCount(HANDLE hMpq, DWORD dwMaxFileCount)
 
         // Allocate new hash table
         ha->pHeader->dwHashTableSize = GetHashTableSizeForFileCount(dwMaxFileCount);
-        ha->pHashTable = ALLOCMEM(TMPQHash, ha->pHeader->dwHashTableSize);
+        ha->pHashTable = STORM_ALLOC(TMPQHash, ha->pHeader->dwHashTableSize);
         if(ha->pHashTable != NULL)
             memset(ha->pHashTable, 0xFF, ha->pHeader->dwHashTableSize * sizeof(TMPQHash));
         else
@@ -655,7 +674,7 @@ bool WINAPI SFileSetMaxFileCount(HANDLE hMpq, DWORD dwMaxFileCount)
         pOldFileTable = ha->pFileTable;
 
         // Create new one
-        ha->pFileTable = ALLOCMEM(TFileEntry, dwMaxFileCount);
+        ha->pFileTable = STORM_ALLOC(TFileEntry, dwMaxFileCount);
         if(ha->pFileTable != NULL)
             memset(ha->pFileTable, 0, dwMaxFileCount * sizeof(TFileEntry));
         else
@@ -708,20 +727,18 @@ bool WINAPI SFileSetMaxFileCount(HANDLE hMpq, DWORD dwMaxFileCount)
     }
 
     // Mark the archive as changed
-    // Keep the (listfile) and (attributes) as-is
+    // Note: We always have to rebuild the (attributes) file due to file table change
     if(nError == ERROR_SUCCESS)
     {
-        ha->dwFileTableSize = dwMaxFileCount;
         ha->dwMaxFileCount = dwMaxFileCount;
-        ha->dwFlags |= MPQ_FLAG_CHANGED | MPQ_FLAG_LISTFILE_VALID | MPQ_FLAG_ATTRIBS_VALID;
-        SaveMPQTables(ha);
+        InvalidateInternalFiles(ha);
     }
     else
     {
         // Revert the hash table
         if(ha->pHashTable != NULL && pOldHashTable != NULL)
         {
-            FREEMEM(ha->pHashTable);
+            STORM_FREE(ha->pHashTable);
             ha->pHeader->dwHashTableSize = dwOldHashTableSize;
             ha->pHashTable = pOldHashTable;
         }
@@ -736,7 +753,7 @@ bool WINAPI SFileSetMaxFileCount(HANDLE hMpq, DWORD dwMaxFileCount)
         // Revert the file table
         if(pOldFileTable != NULL)
         {
-            FREEMEM(ha->pFileTable);
+            STORM_FREE(ha->pFileTable);
             ha->pFileTable = pOldFileTable;
         }
 
