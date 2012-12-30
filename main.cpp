@@ -238,7 +238,7 @@ int main(int argc, char** argv)
     // List file extraction
     if (!strListFile.empty())
     {
-        if (!SFileExtractFile(hArchive, "(listfile)", strListFile.c_str()))
+        if (!SFileExtractFile(hArchive, "(listfile)", strListFile.c_str(), SFILE_OPEN_FROM_MPQ))
         {
             cerr << "Failed to extract the list of files" << endl;
             SFileCloseArchive(hArchive);
@@ -383,7 +383,7 @@ int main(int argc, char** argv)
                 strDestName += iter->strFileName;
             }
 
-            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str(), SFILE_OPEN_PATCHED_FILE))
+            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str(), 0))
                 cerr << "Failed to extract the file '" << iter->strFullPath << "' in " << strDestName << endl;
         }
     }
