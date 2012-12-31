@@ -27,6 +27,7 @@ enum
 {
     OPT_HELP,
     OPT_LISTFILE,
+    OPT_APPLYLIST,
     OPT_PATCHPREFIX,
     OPT_PATCHES,
     OPT_SEARCH,
@@ -40,6 +41,8 @@ enum
 const CSimpleOpt::SOption COMMAND_LINE_OPTIONS[] = {
     { OPT_HELP,             "-h",               SO_NONE    },
     { OPT_HELP,             "--help",           SO_NONE    },
+    { OPT_APPLYLIST,         "-a",              SO_REQ_SEP },
+    { OPT_APPLYLIST,         "--applylist",     SO_REQ_SEP },
     { OPT_LISTFILE,         "-l",               SO_REQ_SEP },
     { OPT_LISTFILE,         "--listfile",       SO_REQ_SEP },
     { OPT_PATCHPREFIX,      "--prefix",         SO_REQ_SEP },
@@ -76,6 +79,8 @@ void showUsage(const std::string& strApplicationName)
          << endl
          << "Options:" << endl
          << "    --help, -h:              Display this help" << endl
+         << "    --applylist <FILE>" << endl
+         << "    -a <FILE>                Apply list file FILE to the archive" << endl
          << "    --listfile <FILE>," << endl
          << "    -l <FILE>:               Retrieve the list of files in the archive and save it" << endl
          << "                             in FILE" << endl
@@ -127,6 +132,7 @@ void showUsage(const std::string& strApplicationName)
 int main(int argc, char** argv)
 {
     HANDLE hArchive;
+    string strApplyListFile;
     string strListFile;
     string strPatchPrefix;
     vector<string> patches;
@@ -149,6 +155,10 @@ int main(int argc, char** argv)
                 case OPT_HELP:
                     showUsage(argv[0]);
                     return 0;
+                
+                case OPT_APPLYLIST:
+                    strApplyListFile = args.OptionArg();
+                    break;
                 
                 case OPT_LISTFILE:
                     strListFile = args.OptionArg();
@@ -215,11 +225,20 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    if (!strApplyListFile.empty())
+    {
+        if((SFileAddListFile(hArchive, strApplyListFile.c_str()))!= ERROR_SUCCESS)
+        {
+            cerr << "Failed to apply list file to archive" << endl;
+            SFileCloseArchive(hArchive);
+            return -1;
+        }
+    }
 
     // List file extraction
     if (!strListFile.empty())
     {
-        if (!SFileExtractFile(hArchive, "(listfile)", strListFile.c_str()))
+        if (!SFileExtractFile(hArchive, "(listfile)", strListFile.c_str(), SFILE_OPEN_FROM_MPQ))
         {
             cerr << "Failed to extract the list of files" << endl;
             SFileCloseArchive(hArchive);
@@ -364,7 +383,7 @@ int main(int argc, char** argv)
                 strDestName += iter->strFileName;
             }
 
-            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str(), SFILE_OPEN_PATCHED_FILE))
+            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str(), 0))
                 cerr << "Failed to extract the file '" << iter->strFullPath << "' in " << strDestName << endl;
         }
     }
