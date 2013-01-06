@@ -10,7 +10,7 @@
 /* 11.03.03  1.00  Lad  Splitted from Pkware.cpp                             */
 /* 20.05.03  2.00  Lad  Added compression                                    */
 /* 19.11.03  2.01  Dan  Big endian handling                                  */
-/* 06.01.13  7.02  brad_c6 Fixed wav decompression on x64 platforms          */
+/* 06.01.13  8.20  brad_c6 Fixed wav decompression on x64 platforms          */
 /*****************************************************************************/
 
 #include "adpcm.h"
