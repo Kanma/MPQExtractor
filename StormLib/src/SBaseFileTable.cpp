@@ -485,7 +485,7 @@ TMPQExtTable * LoadExtTable(
                     pExtTable->dwSignature = pCompressed->dwSignature;
                     pExtTable->dwVersion   = pCompressed->dwVersion;
                     pExtTable->dwDataSize  = pCompressed->dwDataSize;
-                    if(!SCompDecompress2((char *)(pExtTable + 1), &cbOutBuffer, (char *)(pCompressed + 1), cbInBuffer))
+                    if(!SCompDecompress2(pExtTable + 1, &cbOutBuffer, pCompressed + 1, cbInBuffer))
                     {
                         STORM_FREE(pExtTable);
                         pExtTable = NULL;
@@ -533,7 +533,7 @@ static int SaveMpqTable(
             return ERROR_NOT_ENOUGH_MEMORY;
 
         // Compress the table
-        SCompCompress((char *)pCompressed, &cbOutBuffer, (char *)pMpqTable, cbInBuffer, MPQ_COMPRESSION_ZLIB, 0, 0);
+        SCompCompress(pCompressed, &cbOutBuffer, pMpqTable, cbInBuffer, MPQ_COMPRESSION_ZLIB, 0, 0);
 
         // If the compression failed, revert it. Otherwise, swap the tables
         if(cbOutBuffer >= cbInBuffer)
@@ -603,7 +603,7 @@ static int SaveExtTable(
         pCompressed->dwSignature = pExtTable->dwSignature;
         pCompressed->dwVersion   = pExtTable->dwVersion;
         pCompressed->dwDataSize  = pExtTable->dwDataSize;
-        SCompCompress((char *)(pCompressed + 1), &cbOutBuffer, (char *)(pExtTable + 1), cbInBuffer, MPQ_COMPRESSION_ZLIB, 0, 0);
+        SCompCompress((pCompressed + 1), &cbOutBuffer, (pExtTable + 1), cbInBuffer, MPQ_COMPRESSION_ZLIB, 0, 0);
 
         // If the compression failed, revert it. Otherwise, swap the tables
         if(cbOutBuffer >= cbInBuffer)

@@ -166,21 +166,12 @@ static int WriteDataToMpqFile(
 
                     if(pFileEntry->dwFlags & MPQ_FILE_IMPLODE)
                     {
-                        SCompImplode((char *)pbCompressed,
-                                            &nOutBuffer,
-                                     (char *)hf->pbFileSector,
-                                             nInBuffer);
+                        SCompImplode(pbCompressed, &nOutBuffer, hf->pbFileSector, nInBuffer);
                     }
 
                     if(pFileEntry->dwFlags & MPQ_FILE_COMPRESS)
                     {
-                        SCompCompress((char *)pbCompressed,
-                                             &nOutBuffer,
-                                      (char *)hf->pbFileSector,
-                                              nInBuffer,
-                                    (unsigned)dwCompression,
-                                              0,
-                                              nCompressionLevel);
+                        SCompCompress(pbCompressed, &nOutBuffer, hf->pbFileSector, nInBuffer, (unsigned)dwCompression, 0, nCompressionLevel);
                     }
 
                     // Update sector positions
