@@ -271,15 +271,15 @@ static int ReadMpqSectors(TMPQFile * hf, LPBYTE pbBuffer, DWORD dwByteOffset, DW
             if(pFileEntry->dwFlags & MPQ_FILE_COMPRESS)
             {
                 if(ha->pHeader->wFormatVersion >= MPQ_FORMAT_VERSION_2)
-                    nResult = SCompDecompress2((char *)pbOutSector, &cbOutSector, (char *)pbInSector, cbInSector);
+                    nResult = SCompDecompress2(pbOutSector, &cbOutSector, pbInSector, cbInSector);
                 else
-                    nResult = SCompDecompress((char *)pbOutSector, &cbOutSector, (char *)pbInSector, cbInSector);
+                    nResult = SCompDecompress(pbOutSector, &cbOutSector, pbInSector, cbInSector);
             }
 
             // Is the file compressed by PKWARE Data Compression Library ?
             else if(pFileEntry->dwFlags & MPQ_FILE_IMPLODE)
             {
-                nResult = SCompExplode((char *)pbOutSector, &cbOutSector, (char *)pbInSector, cbInSector);
+                nResult = SCompExplode(pbOutSector, &cbOutSector, pbInSector, cbInSector);
             }
 
             // Did the decompression fail ?
@@ -389,15 +389,15 @@ static int ReadMpqFileSingleUnit(TMPQFile * hf, void * pvBuffer, DWORD dwFilePos
             if(pFileEntry->dwFlags & MPQ_FILE_COMPRESS)
             {
                 if(ha->pHeader->wFormatVersion >= MPQ_FORMAT_VERSION_2)
-                    nResult = SCompDecompress2((char *)hf->pbFileSector, &cbOutBuffer, (char *)pbRawData, cbInBuffer);
+                    nResult = SCompDecompress2(hf->pbFileSector, &cbOutBuffer, pbRawData, cbInBuffer);
                 else
-                    nResult = SCompDecompress((char *)hf->pbFileSector, &cbOutBuffer, (char *)pbRawData, cbInBuffer);
+                    nResult = SCompDecompress(hf->pbFileSector, &cbOutBuffer, pbRawData, cbInBuffer);
             }
 
             // Is the file compressed by PKWARE Data Compression Library ?
             // Note: Single unit files compressed with IMPLODE are not supported by Blizzard
             else if(pFileEntry->dwFlags & MPQ_FILE_IMPLODE)
-                nResult = SCompExplode((char *)hf->pbFileSector, &cbOutBuffer, (char *)pbRawData, cbInBuffer);
+                nResult = SCompExplode(hf->pbFileSector, &cbOutBuffer, pbRawData, cbInBuffer);
 
             nError = (nResult != 0) ? ERROR_SUCCESS : ERROR_FILE_CORRUPT;
         }

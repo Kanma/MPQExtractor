@@ -12,7 +12,7 @@ include_directories("${MPQEXTRACTOR_SOURCE_DIR}/StormLib/src/"
 )
 
 add_executable(MPQExtractor main.cpp)
-target_link_libraries(MPQExtractor StormLib)
+target_link_libraries(MPQExtractor storm)
 
 # Set the RPATH
 if (APPLE)

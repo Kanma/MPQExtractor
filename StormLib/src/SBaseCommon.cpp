@@ -820,7 +820,7 @@ int LoadMpqTable(
             int cbOutBuffer = (int)dwRealSize;
             int cbInBuffer = (int)dwCompressedSize;
 
-            if(!SCompDecompress2((char *)pvTable, &cbOutBuffer, (char *)pbCompressed, cbInBuffer))
+            if(!SCompDecompress2(pvTable, &cbOutBuffer, pbCompressed, cbInBuffer))
                 nError = GetLastError();
 
             // Free the temporary buffer
@@ -1281,7 +1281,7 @@ int WriteSectorChecksums(TMPQFile * hf)
     BSWAP_ARRAY32_UNSIGNED(hf->SectorChksums, dwCrcSize);
 
     nOutSize = (int)dwCrcSize;
-    SCompCompress((char *)pbCompressed, &nOutSize, (char *)hf->SectorChksums, (int)dwCrcSize, MPQ_COMPRESSION_ZLIB, 0, 0);
+    SCompCompress(pbCompressed, &nOutSize, hf->SectorChksums, (int)dwCrcSize, MPQ_COMPRESSION_ZLIB, 0, 0);
     dwCompressedSize = (DWORD)nOutSize;
 
     // Write the sector CRCs to the archive

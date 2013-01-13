@@ -68,6 +68,7 @@
 // as they are not defined on all platforms
 #define STORMLIB_MIN(a, b) ((a < b) ? a : b)
 #define STORMLIB_MAX(a, b) ((a > b) ? a : b)
+#define STORMLIB_UNUSED(p) ((void)(p))
 
 // Macro for building 64-bit file offset from two 32-bit
 #define MAKE_OFFSET64(hi, lo)      (((ULONGLONG)hi << 32) | lo)

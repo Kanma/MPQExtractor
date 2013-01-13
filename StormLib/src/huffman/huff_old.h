@@ -13,9 +13,7 @@
 #ifndef __HUFFMAN_H__
 #define __HUFFMAN_H__
 
-#include <stdint.h>
-
-#define SIntPtr	intptr_t
+#include "../StormPort.h"
  
 //-----------------------------------------------------------------------------
 // Defines
@@ -23,8 +21,9 @@
 #define INSERT_ITEM    1                   
 #define SWITCH_ITEMS   2                    // Switch the item1 and item2
  
-#define PTR_NOT(ptr)  ((ptr) == gcpFirst ? gpFirst : gpItem3054)
+#define PTR_NOT(ptr)  (THTreeItem *)(~(DWORD_PTR)(ptr))
 #define PTR_PTR(ptr)  ((THTreeItem *)(ptr))
+#define PTR_INT(ptr)  (INT_PTR)(ptr)
  
 #ifndef NULL
 #define NULL 0
@@ -66,10 +65,8 @@ class TOutputStream
 // Huffmann tree item (?)
 struct THTreeItem
 {
-    public:
-    
     THTreeItem * Call1501DB70(THTreeItem * pLast);
-    THTreeItem * GetPrevItem(SIntPtr value);
+    THTreeItem * GetPrevItem(LONG_PTR value);
     void         ClearItemLinks();
     void         RemoveItem();
  
