@@ -5,6 +5,18 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${MPQEXTRACTOR_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${MPQEXTRACTOR_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${MPQEXTRACTOR_BINARY_DIR}/bin")
 
+
+if (NOT EXISTS "${MPQEXTRACTOR_SOURCE_DIR}/StormLib/CMakeLists.txt")
+    message(FATAL_ERROR
+"Missing dependency: StormLib
+MPQExtractor requires the StormLib library.
+It is provided as a GIT submodule of this repository.
+Did you forgot to execute the following commands?
+   git submodule init
+   git submodule update")
+endif()
+
+
 add_subdirectory(StormLib)
 
 include_directories("${MPQEXTRACTOR_SOURCE_DIR}/StormLib/src/"
@@ -12,7 +24,7 @@ include_directories("${MPQEXTRACTOR_SOURCE_DIR}/StormLib/src/"
 )
 
 add_executable(MPQExtractor main.cpp)
-target_link_libraries(MPQExtractor StormLib)
+target_link_libraries(MPQExtractor storm)
 
 # Set the RPATH
 if (APPLE)

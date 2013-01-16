@@ -4,6 +4,23 @@ A command-line tool to extract files from MPQ archives (used by Blizzard games).
 
 Works on MacOS X and Linux.
 
+
+## Dependencies
+
+The following libraries are necessary to build the extractor:
+
+* StormLib (http://www.zezula.net/en/mpq/stormlib.html), no license, free to use -
+  included as a GIT submodule
+* SimpleOpt 3.4 (http://code.jellycan.com/simpleopt/), MIT License - part of the
+  distribution
+
+To download the StormLib submodule, do:
+
+    somewhere$ cd <path/to/the/source/of/MPQExtractor>
+    MPQExtractor$ git submodule init
+    MPQExtractor$ git submodule update
+
+
 ## Compilation
 
 Requires <a href="http://www.cmake.org/">cmake</a> to build:
@@ -139,18 +156,6 @@ Apply patches with different bases, extract files in lowercase:
     world/
 
 
-## Dependencies
-
-The repository/package contains all the necessary files to build the extractor.
-
-The following libraries are included as part of the distribution:
-
-* StormLib (http://www.zezula.net/en/mpq/stormlib.html), no license, free to use
-* SimpleOpt 3.4 (http://code.jellycan.com/simpleopt/), MIT License
-
-StormLib has some patches that have not yet been merged back into the official release.
-
-
 ## License
 
 MPQExtractor is is made available under the MIT License. The text of the license is in the file 'LICENSE'.
@@ -162,6 +167,6 @@ Under the MIT License you may use MPQExtractor for any purpose you wish, without
 
 In practice this means that whenever you distribute your application, whether as binary or as source code, you must include somewhere in your distribution the
 text in the file 'LICENSE'. This might be in the printed documentation, as a file on delivered media, or even on the credits / acknowledgements of the
-runtime application itself; any of those would satisfy the requirement. 
+runtime application itself; any of those would satisfy the requirement.
 
 Even if the license doesn't require it, please consider to contribute your modifications back to the community.
