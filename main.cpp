@@ -114,6 +114,8 @@ void showUsage(const std::string& strApplicationName)
          << "       ./MPQExtractor -s *.M2 archive.MPQ" << endl
          << endl
          << "  3) Extract a specific file from a MPQ archive:" << endl
+         << "       IMPORTANT: The file name must be enclosed in \"\" to prevent the shell to" << endl
+         << "                  interpret the \\ character as the start of an escape sequence." << endl
          << endl
          << "       ./MPQExtractor -e \"Path\\To\\The\\File\" -o out archive.MPQ" << endl
          << endl

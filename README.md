@@ -37,7 +37,7 @@ The executable will be put in build/bin/
 
 See `MPQExtractor --help` for more details. All the examples below are shown using the World of Warcraft 4.3 files, as of Jan 2012.
 
-Retrieve the list of files in a MPQ archive:
+**Retrieve the list of files in a MPQ archive:**
 
     $ MPQExtractor -l list.txt /path/to/art.MPQ
     $ cat list.txt
@@ -48,7 +48,7 @@ Retrieve the list of files in a MPQ archive:
     ...
 
 
-Search all the *.M2 files in a MPQ archive:
+**Search all the *.M2 files in a MPQ archive:**
 
     $ MPQExtractor -s *.M2 /path/to/art.MPQ
     Opening 'path/to/art.MPQ'...
@@ -63,7 +63,11 @@ Search all the *.M2 files in a MPQ archive:
     ....
 
 
-Extract a specific file from a MPQ archive:
+**Extract a specific file from a MPQ archive:**
+
+**IMPORTANT:** Note that the file name is enclosed in "". This is to prevent the shell
+to try to interpret the backslashes (\\) as the start of an escape sequence, which would
+result in invalid file names.
 
     $ mkdir out
     $ MPQExtractor -e "Character\Worgen\Male\WorgenMale.M2" -o out /path/to/art.MPQ
@@ -75,7 +79,8 @@ Extract a specific file from a MPQ archive:
     WorgenMale.M2
 
 
-Extract some specific files from a MPQ archive, preserving the path hierarchy found inside the MPQ archive:
+**Extract some specific files from a MPQ archive, preserving the path hierarchy found
+inside the MPQ archive:**
 
     $ mkdir out
     $ MPQExtractor -e "Character\Worgen\Male\WorgenMale*" -f -o out /path/to/art.MPQ
@@ -110,7 +115,7 @@ Extract some specific files from a MPQ archive, preserving the path hierarchy fo
     ...
 
 
-Apply some patches before extracting a specific file from a MPQ archive:
+**Apply some patches before extracting a specific file from a MPQ archive:**
 
     $ mkdir out
     $ MPQExtractor -p /patches/wow-update-*.MPQ  \
@@ -137,7 +142,7 @@ Apply some patches before extracting a specific file from a MPQ archive:
     $ ls out/
     WorgenMale.M2
 
-Apply patches with different bases, extract files in lowercase:
+**Apply patches with different bases, extract files in lowercase:**
 
     $ mkdir out
     $ MPQExtractor -p /patches/wow-update-13164.MPQ,base  \
