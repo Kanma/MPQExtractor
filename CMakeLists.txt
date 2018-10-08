@@ -23,6 +23,11 @@ include_directories("${MPQEXTRACTOR_SOURCE_DIR}/StormLib/src/"
                     "${MPQEXTRACTOR_SOURCE_DIR}/include/"
 )
 
+# Replacement for dirent.h and unistd.h
+if (WIN32)
+  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/dirent/include")
+endif()
+
 add_executable(MPQExtractor main.cpp)
 target_link_libraries(MPQExtractor storm)
 
