@@ -6,10 +6,10 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <stdio.h>
-#include <direct.h>
 #include <dirent.h>
 #ifdef WIN32
     #include <io.h>
+    #include <direct.h>
     #define mkdir(dirname, acl) _mkdir(dirname)
 #elif
     #include <unistd.h>
