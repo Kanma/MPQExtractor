@@ -11,7 +11,7 @@
     #include <io.h>
     #include <direct.h>
     #define mkdir(dirname, acl) _mkdir(dirname)
-#elif
+#else
     #include <unistd.h>
 #endif
 #include <sys/stat.h>
