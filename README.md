@@ -2,14 +2,14 @@
 
 A command-line tool to extract files from MPQ archives (used by Blizzard games).
 
-Works on MacOS X and Linux.
+Works on MacOS X, Linux and Windows.
 
 
 ## Dependencies
 
 The following libraries are necessary to build the extractor:
 
-* StormLib (http://www.zezula.net/en/mpq/stormlib.html), no license, free to use -
+* StormLib (http://www.zezula.net/en/mpq/stormlib.html), MIT License, free to use -
   included as a GIT submodule
 * SimpleOpt 3.4 (http://code.jellycan.com/simpleopt/), MIT License - part of the
   distribution
@@ -28,9 +28,17 @@ Requires <a href="http://www.cmake.org/">cmake</a> to build:
     $ mkdir build
     $ cd build
     $ cmake <path/to/the/source/of/MPQExtractor>
-    $ make
+    $ cmake --build .
 
 The executable will be put in build/bin/
+
+**Windows**:
+To specify the compiler and build in Release mode:
+
+    mkdir build
+    cd build
+    cmake <path/to/the/source/of/MPQExtractor> -G "Visual Studio 15 2017 Win64" 
+    cmake --build . --config Release
 
 
 ## Usage

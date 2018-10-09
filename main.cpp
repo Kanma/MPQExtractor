@@ -4,9 +4,16 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <unistd.h>
-#include <dirent.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <dirent.h>
+#ifdef WIN32
+    #include <io.h>
+    #include <direct.h>
+    #define mkdir(dirname, acl) _mkdir(dirname)
+#else
+    #include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 
