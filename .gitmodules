@@ -1,6 +1,6 @@
 [submodule "StormLib"]
 	path = StormLib
-	url = git://github.com/stormlib/StormLib.git
+	url = git://github.com/ladislav-zezula/StormLib.git
 [submodule "dirent"]
 	path = dirent
 	url = git://github.com/tronkko/dirent.git
