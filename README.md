@@ -5,6 +5,15 @@ A command-line tool to extract files from MPQ archives (used by Blizzard games).
 Works on MacOS X, Linux and Windows.
 
 
+## IN CASE OF ERROR (COMPILATION PROBLEMS / EXTRACTION ISSUES)
+
+Most of the compilations problems and failures to extract a file from a MPQ archive can be solved by
+**updating the version of StormLib used**:
+
+    $ cd StormLib
+    $ git pull origin master
+
+
 ## Dependencies
 
 The following libraries are necessary to build the extractor:
