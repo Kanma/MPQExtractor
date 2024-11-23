@@ -137,6 +137,23 @@ void showUsage(const std::string& strApplicationName)
          << endl;
 }
 
+bool isWar3Map(const std::string& filename) {
+    // Find the position of the last dot in the filename
+    size_t dotPosition = filename.rfind('.');
+    if (dotPosition == std::string::npos) {
+        // No dot found in the filename, so no extension
+        return false;
+    }
+
+    // Extract the extension
+    std::string extension = filename.substr(dotPosition);
+
+    // Convert to lowercase for case-insensitive comparison
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+
+    // Check if the extension matches .w3m or .w3x
+    return extension == ".w3m" || extension == ".w3x";
+}
 
 int main(int argc, char** argv)
 {
@@ -228,7 +245,8 @@ int main(int argc, char** argv)
 
     
     cout << "Opening '" << args.File(0) << "'..." << endl;
-    if (!SFileOpenArchive(args.File(0), 0, MPQ_OPEN_READ_ONLY, &hArchive))
+    bool isMap = isWar3Map(args.File(0));
+    if (!SFileOpenArchive(args.File(0), 0, MPQ_OPEN_READ_ONLY | (isMap ? MPQ_OPEN_FORCE_MPQ_V1 : 0) , &hArchive))
     {
         cerr << "Failed to open the file '" << args.File(0) << "'" << endl;
         return -1;
