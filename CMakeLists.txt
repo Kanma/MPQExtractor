@@ -17,6 +17,15 @@ Did you forgot to execute the following commands?
    git submodule update")
 endif()
 
+# Recent StormLib can link libtommath/libtomcrypt either from the system (via
+# pkg-config) or from its bundled copies. Default to the bundled ones so that
+# a fresh clone still builds with nothing but a compiler and CMake, as it did
+# before. Override with -DSTORM_USE_BUNDLED_LIBRARIES=OFF to link system
+# libraries instead.
+option(STORM_USE_BUNDLED_LIBRARIES
+    "Force use of bundled dependencies instead of system libraries." ON
+)
+
 
 add_subdirectory(StormLib)
 
