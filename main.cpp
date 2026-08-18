@@ -155,6 +155,43 @@ bool isWar3Map(const std::string& filename) {
     return extension == ".w3m" || extension == ".w3x";
 }
 
+// Some map protectors rewrite every hash-table entry to a non-neutral locale
+// (and randomize the platform field) so that no file is reachable at the
+// default neutral locale (0). SFileExtractFile then fails even though the file
+// physically exists and the game loads it fine. When the default extraction
+// fails, enumerate the locale(s) actually present for this name and retry under
+// each one until it succeeds. Locale is a per-file property, so this is done
+// per-file. The global locale is restored to neutral afterwards so unaffected
+// files keep their normal behaviour.
+static bool extractFileAnyLocale(HANDLE hArchive, const char* szName, const char* szDest)
+{
+    if (SFileExtractFile(hArchive, szName, szDest, SFILE_OPEN_FROM_MPQ))
+        return true;
+
+    LCID locales[16];
+    DWORD dwMaxLocales = sizeof(locales) / sizeof(locales[0]);
+    DWORD dwResult = SFileEnumLocales(hArchive, szName, locales, &dwMaxLocales, 0);
+    if (dwResult != ERROR_SUCCESS && dwResult != ERROR_INSUFFICIENT_BUFFER)
+        return false;
+    if (dwMaxLocales > sizeof(locales) / sizeof(locales[0]))
+        dwMaxLocales = sizeof(locales) / sizeof(locales[0]);
+
+    for (DWORD i = 0; i < dwMaxLocales; ++i)
+    {
+        if (locales[i] == 0)
+            continue; // neutral already tried above
+
+        SFileSetLocale(locales[i]);
+        bool bExtracted = SFileExtractFile(hArchive, szName, szDest, SFILE_OPEN_FROM_MPQ);
+        SFileSetLocale(0); // restore neutral for subsequent files
+
+        if (bExtracted)
+            return true;
+    }
+
+    return false;
+}
+
 int main(int argc, char** argv)
 {
     HANDLE hArchive;
@@ -410,7 +447,7 @@ int main(int argc, char** argv)
                 strDestName += iter->strFileName;
             }
 
-            if (!SFileExtractFile(hArchive, iter->strFullPath.c_str(), strDestName.c_str(), 0))
+            if (!extractFileAnyLocale(hArchive, iter->strFullPath.c_str(), strDestName.c_str()))
                 cerr << "Failed to extract the file '" << iter->strFullPath << "' in " << strDestName << endl;
         }
     }
