@@ -42,6 +42,8 @@ enum
     OPT_DEST,
     OPT_FULLPATH,
     OPT_LOWERCASE,
+    OPT_MAXSIZE,
+    OPT_MAXTOTAL,
 };
 
 
@@ -65,6 +67,8 @@ const CSimpleOpt::SOption COMMAND_LINE_OPTIONS[] = {
     { OPT_FULLPATH,         "--fullpath",       SO_NONE    },
     { OPT_LOWERCASE,        "-c",               SO_NONE    },
     { OPT_LOWERCASE,        "--lowercase",      SO_NONE    },
+    { OPT_MAXSIZE,          "--max-size",       SO_REQ_SEP },
+    { OPT_MAXTOTAL,         "--max-total",      SO_REQ_SEP },
     
     SO_END_OF_OPTIONS
 };
@@ -109,6 +113,11 @@ void showUsage(const std::string& strApplicationName)
          << "    --prefix <PREFIX>        Path prefix to apply to all patches which do not specify their " << endl
          << "                             own explicit prefix" << endl
          << "    --lowercase, -c:         Convert extracted file paths to lowercase" <<endl
+         << "    --max-size <SIZE>        Ignore files matched by a search pattern whose declared" << endl
+         << "                             (uncompressed) size exceeds SIZE. Accepts K, M and G" << endl
+         << "                             suffixes (e.g. 64K)" << endl
+         << "    --max-total <SIZE>       Stop extracting once SIZE bytes have been written in total" << endl
+         << "                             (same suffixes as --max-size)" << endl
          << endl
          << "Examples:" << endl
          << endl
@@ -135,6 +144,29 @@ void showUsage(const std::string& strApplicationName)
          << endl
          << "       ./MPQExtractor -p patch-*.MPQ --prefix base -e \"Path\\To\\The\\File\" -o out archive.MPQ" << endl
          << endl;
+}
+
+// Parse a byte count with an optional K, M or G (binary) suffix. Returns false
+// on malformed input.
+static bool parseSize(const char* szValue, unsigned long long* pSize)
+{
+    char* szEnd = NULL;
+    unsigned long long size = strtoull(szValue, &szEnd, 10);
+    if (szEnd == szValue)
+        return false;
+
+    switch (*szEnd)
+    {
+        case 'k': case 'K': size <<= 10; ++szEnd; break;
+        case 'm': case 'M': size <<= 20; ++szEnd; break;
+        case 'g': case 'G': size <<= 30; ++szEnd; break;
+    }
+
+    if (*szEnd != 0)
+        return false;
+
+    *pSize = size;
+    return true;
 }
 
 bool isWar3Map(const std::string& filename) {
@@ -205,6 +237,12 @@ int main(int argc, char** argv)
     bool bExtraction = false;
     bool bUseFullPath = false;
     bool bLowerCase = false;
+    // Limits guard against archives whose tables declare bogus entries: map
+    // protectors pad the hash/block tables with tens of thousands of fake
+    // entries claiming up to the size of the whole archive, which "extract"
+    // into junk and can fill a disk when extracting by wildcard.
+    unsigned long long ullMaxSize = 0;   // 0 = unlimited
+    unsigned long long ullMaxTotal = 0;  // 0 = unlimited
 
 
     // Parse the command-line parameters
@@ -264,6 +302,22 @@ int main(int argc, char** argv)
 
                 case OPT_LOWERCASE:
                     bLowerCase = true;
+                    break;
+
+                case OPT_MAXSIZE:
+                    if (!parseSize(args.OptionArg(), &ullMaxSize))
+                    {
+                        cerr << "Invalid size for --max-size: " << args.OptionArg() << endl;
+                        return -1;
+                    }
+                    break;
+
+                case OPT_MAXTOTAL:
+                    if (!parseSize(args.OptionArg(), &ullMaxTotal))
+                    {
+                        cerr << "Invalid size for --max-total: " << args.OptionArg() << endl;
+                        return -1;
+                    }
                     break;
             }
         }
@@ -366,10 +420,18 @@ int main(int argc, char** argv)
         
             if (handle)
             {
+                unsigned long ulSkipped = 0;
+
                 cout << endl;
                 cout << "Found files:" << endl;
 
                 do {
+                    if (ullMaxSize && findData.dwFileSize > ullMaxSize)
+                    {
+                        ++ulSkipped;
+                        continue;
+                    }
+
                     cout << "  - " << findData.cFileName << endl;
 
                     tSearchResult r;
@@ -380,6 +442,9 @@ int main(int argc, char** argv)
                 } while (SFileFindNextFile(handle, &findData));
 
                 SFileFindClose(handle);
+
+                if (ulSkipped)
+                    cerr << "Skipped " << ulSkipped << " file(s) larger than --max-size" << endl;
             }
             else
             {
@@ -398,9 +463,18 @@ int main(int argc, char** argv)
         if (strDestination.at(strDestination.size() - 1) != '/')
             strDestination += "/";
 
+        unsigned long long ullWritten = 0;
+
         vector<tSearchResult>::iterator iter, iterEnd;
         for (iter = searchResults.begin(), iterEnd = searchResults.end(); iter != iterEnd; ++iter)
         {
+            if (ullMaxTotal && ullWritten >= ullMaxTotal)
+            {
+                cerr << "Stopped after writing " << ullWritten << " bytes: --max-total reached, "
+                     << (iterEnd - iter) << " file(s) not extracted" << endl;
+                break;
+            }
+
             string strDestName = strDestination;
             
             if (bUseFullPath)
@@ -448,7 +522,15 @@ int main(int argc, char** argv)
             }
 
             if (!extractFileAnyLocale(hArchive, iter->strFullPath.c_str(), strDestName.c_str()))
+            {
                 cerr << "Failed to extract the file '" << iter->strFullPath << "' in " << strDestName << endl;
+            }
+            else if (ullMaxTotal)
+            {
+                struct stat st;
+                if (stat(strDestName.c_str(), &st) == 0)
+                    ullWritten += st.st_size;
+            }
         }
     }
 
