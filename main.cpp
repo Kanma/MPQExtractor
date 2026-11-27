@@ -27,6 +27,38 @@ struct tSearchResult
 };
 
 
+// True when an archive entry name is safe to use as a path below the
+// destination folder. Entry names come from the archive itself (its hash
+// table, its (listfile)) or from list files built out of its contents, so a
+// crafted archive can name an entry "..\..\x" or "/x" and, with --fullpath,
+// have it written outside --dest. Rejects absolute names, drive letters and
+// any ':', control characters, and any ".." component, with either separator.
+static bool isSafeEntryName(const string& name)
+{
+    if (name.empty() || name[0] == '/' || name[0] == '\\')
+        return false;
+
+    for (string::const_iterator it = name.begin(); it != name.end(); ++it)
+    {
+        unsigned char c = (unsigned char) *it;
+        if (c < 0x20 || c == 0x7f || c == ':')
+            return false;
+    }
+
+    size_t start = 0;
+    while (true)
+    {
+        size_t end = name.find_first_of("/\\", start);
+        string component = name.substr(start, end == string::npos ? string::npos : end - start);
+        if (component == "..")
+            return false;
+        if (end == string::npos)
+            return true;
+        start = end + 1;
+    }
+}
+
+
 /**************************** COMMAND-LINE PARSING ****************************/
 
 // The valid options
@@ -350,6 +382,12 @@ int main(int argc, char** argv)
     {
         if ((strSearchPattern.find("*") == string::npos) && (strSearchPattern.find("?") == string::npos))
         {
+            if (!isSafeEntryName(strSearchPattern))
+            {
+                cerr << "Refusing unsafe file name: " << strSearchPattern << endl;
+                return -1;
+            }
+
             tSearchResult r;
             r.strFileName = strSearchPattern.substr(strSearchPattern.find_last_of("\\") + 1);
             r.strFullPath = strSearchPattern;
@@ -370,6 +408,13 @@ int main(int argc, char** argv)
                 cout << "Found files:" << endl;
 
                 do {
+                    // Never list or extract a name that could escape --dest.
+                    if (!isSafeEntryName(findData.cFileName))
+                    {
+                        cerr << "Skipping unsafe file name: " << findData.cFileName << endl;
+                        continue;
+                    }
+
                     cout << "  - " << findData.cFileName << endl;
 
                     tSearchResult r;
